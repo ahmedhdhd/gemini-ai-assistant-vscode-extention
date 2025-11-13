@@ -10,10 +10,6 @@ A Visual Studio Code extension that integrates Google's Gemini AI to provide an 
 - ✅ **Approval System** - Review and approve code changes before applying them to your editor
 - 🔧 **Configurable Models** - Choose between different Gemini models (gemini-pro, gemini-pro-vision)
 
-## Installation
-
-1. Install the extension from the VS Code Marketplace
-2. Reload VS Code when prompted
 
 ## Setup
 
