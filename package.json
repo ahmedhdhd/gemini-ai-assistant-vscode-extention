@@ -1,0 +1,109 @@
+{
+  "name": "gemini-ai-assistant",
+  "displayName": "Gemini AI Assistant",
+  "description": "AI assistant powered by Google Gemini with custom context support",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "geminiAssistant.openChat",
+        "title": "Open Gemini Assistant",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "geminiAssistant.addContext",
+        "title": "Add Custom Context",
+        "icon": "$(add)"
+      },
+      {
+        "command": "geminiAssistant.clearContext",
+        "title": "Clear Context",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "geminiAssistant.acceptSuggestion",
+        "title": "Accept Suggestion",
+        "icon": "$(check)"
+      },
+      {
+        "command": "geminiAssistant.declineSuggestion",
+        "title": "Decline Suggestion",
+        "icon": "$(close)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "geminiAssistant",
+          "title": "Gemini Assistant",
+          "icon": "$(robot)"
+        }
+      ]
+    },
+    "views": {
+      "geminiAssistant": [
+        {
+          "id": "geminiChat",
+          "name": "AI Chat",
+          "type": "webview"
+        },
+        {
+          "id": "geminiContext",
+          "name": "Custom Context",
+          "type": "tree"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "geminiAssistant.addContext",
+          "when": "view == geminiContext",
+          "group": "navigation"
+        },
+        {
+          "command": "geminiAssistant.clearContext",
+          "when": "view == geminiContext",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Gemini Assistant",
+      "properties": {
+        "geminiAssistant.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Your Google Gemini API key",
+          "scope": "application"
+        },
+        "geminiAssistant.model": {
+          "type": "string",
+          "default": "gemini-pro",
+          "description": "Gemini model to use",
+          "enum": ["gemini-pro", "gemini-pro-vision"],
+          "scope": "application"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.74.0",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

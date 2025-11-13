@@ -1,0 +1,184 @@
+# Gemini AI Assistant for VS Code
+
+A VS Code extension that provides an AI-powered assistant using Google's Gemini API with custom context support and code suggestion approval system.
+
+## Features
+
+- 🤖 **AI Chat Interface**: Interactive sidebar panel for conversations with Gemini AI
+- 📝 **Custom Context**: Add and manage custom context that influences AI responses
+- 💡 **Code Suggestions**: AI-generated code suggestions with accept/decline functionality
+- ✅ **Approval System**: Review and approve each suggestion before applying to your code
+- 🔧 **Editor Integration**: Apply approved suggestions directly to your active editor
+
+## Setup Instructions
+
+### 1. Project Structure
+Create your project with the following structure:
+```
+gemini-ai-assistant/
+├── src/
+│   ├── extension.ts
+│   ├── geminiService.ts
+│   ├── contextProvider.ts
+│   └── chatWebviewProvider.ts
+├── .vscode/
+│   └── launch.json
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+### 2. Installation Steps
+
+1. **Create the project directory**:
+   ```bash
+   mkdir gemini-ai-assistant
+   cd gemini-ai-assistant
+   ```
+
+2. **Copy all the provided files** into their respective locations
+
+3. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+4. **Compile TypeScript**:
+   ```bash
+   npm run compile
+   ```
+
+### 3. Get Gemini API Key
+
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Create a new API key
+3. Copy the key for configuration
+
+### 4. Running the Extension
+
+1. **Open in VS Code**:
+   ```bash
+   code .
+   ```
+
+2. **Start debugging**:
+   - Press `F5` or go to Run > Start Debugging
+   - This opens a new VS Code window with your extension loaded
+
+3. **Configure API Key**:
+   - In the new window, go to Settings (Ctrl+,)
+   - Search for "Gemini Assistant"
+   - Paste your API key in the "Api Key" field
+
+## Usage Guide
+
+### Opening the Assistant
+
+1. **Via Activity Bar**: Click the robot icon in the activity bar (left sidebar)
+2. **Via Command**: Open Command Palette (`Ctrl+Shift+P`) and run "Open Gemini Assistant"
+
+### Using Custom Context
+
+1. **Add Context**: 
+   - Click the `+` icon in the "Custom Context" panel
+   - Enter context like "Use TypeScript interfaces" or "Follow React best practices"
+
+2. **Manage Context**:
+   - View all context items in the Custom Context panel
+   - Click any item to remove it
+   - Use "Clear Context" to remove all items
+
+### Chatting with AI
+
+1. **Start Conversation**: Type your message in the input field at the bottom
+2. **Send Message**: Press Enter or click "Send"
+3. **View Responses**: AI responses appear in the chat area
+
+### Code Suggestions
+
+1. **Generated Automatically**: When AI provides code, suggestions appear below responses
+2. **Review Options**:
+   - **Accept**: Mark as approved (for tracking)
+   - **Apply to Editor**: Insert code into your active file
+   - **Decline**: Mark as rejected
+
+3. **Application Methods**:
+   - **Insert at Cursor**: If no text is selected
+   - **Replace Selection**: If text is selected in the editor
+
+## Configuration Options
+
+### Settings (File > Preferences > Settings)
+
+- **`geminiAssistant.apiKey`**: Your Google Gemini API key
+- **`geminiAssistant.model`**: AI model to use (gemini-pro, gemini-pro-vision)
+
+## Extension Commands
+
+- `geminiAssistant.openChat`: Open the AI chat interface
+- `geminiAssistant.addContext`: Add custom context
+- `geminiAssistant.clearContext`: Clear all custom context
+- `geminiAssistant.acceptSuggestion`: Accept a code suggestion
+- `geminiAssistant.declineSuggestion`: Decline a code suggestion
+
+## Development Notes
+
+### Key Components
+
+1. **GeminiService**: Handles API communication with Google Gemini
+2. **ContextProvider**: Manages custom context items and tree view
+3. **ChatWebviewProvider**: Provides the chat interface and suggestion management
+4. **Extension**: Main activation and command registration
+
+### Architecture
+
+- **Webview**: Custom HTML/CSS/JavaScript for chat interface
+- **Tree View**: Native VS Code tree view for context management
+- **Commands**: VS Code commands for all user actions
+- **Configuration**: VS Code settings for API key and preferences
+
+### Error Handling
+
+- API key validation and user guidance
+- Rate limit handling with user feedback
+- Network error recovery with informative messages
+- Input validation and sanitization
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"API key not configured"**:
+   - Go to VS Code Settings and set your Gemini API key
+
+2. **"Invalid API key"**:
+   - Verify your API key is correct
+   - Check if the key has necessary permissions
+
+3. **"Rate limit exceeded"**:
+   - Wait a moment before sending another request
+   - Check your Gemini API quotas
+
+4. **Extension not appearing**:
+   - Reload the VS Code window (Ctrl+Shift+P > "Reload Window")
+   - Check if the extension compiled successfully
+
+### Debug Mode
+
+1. Open the project in VS Code
+2. Press F5 to launch debug mode
+3. Check the Debug Console for error messages
+4. Use Developer Tools (Help > Toggle Developer Tools) in the extension host window
+
+## Contributing
+
+Feel free to enhance this extension with:
+- Additional AI models support
+- More sophisticated context management
+- Enhanced code suggestion features
+- Better error handling
+- UI/UX improvements
+
+## License
+
+This project is provided as-is for educational and development purposes.
