@@ -10,12 +10,10 @@ let geminiService: GeminiService;
 export function activate(context: vscode.ExtensionContext) {
     console.log('Gemini AI Assistant is now active!');
 
-    // Initialize services
     geminiService = new GeminiService();
     contextProvider = new ContextProvider(context);
     chatProvider = new ChatWebviewProvider(context.extensionUri, geminiService, contextProvider);
 
-    // Register webview provider
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             'geminiChat',

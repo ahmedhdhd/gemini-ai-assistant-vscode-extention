@@ -43,6 +43,10 @@ export class GeminiService {
         messages: ChatMessage[],
         customContext: string[] = []
     ): Promise<string> {
+        console.log('Generating response with messages:', messages);
+        console.log('Custom context:', customContext);
+        console.log('API key configured:', !!this.apiKey);
+        
         if (!this.apiKey) {
             throw new Error('Gemini API key not configured');
         }
@@ -50,6 +54,7 @@ export class GeminiService {
         try {
             const config = vscode.workspace.getConfiguration('geminiAssistant');
             const model = config.get<string>('model') || 'gemini-2.0-flash';
+            console.log('Using model:', model);
 
             // Prepare the conversation context
             let conversationText = '';
@@ -87,6 +92,7 @@ export class GeminiService {
                     }
                 }
             );
+            console.log('Received response from API:', response.data);
 
             if (response.data.candidates && response.data.candidates.length > 0) {
                 const candidate = response.data.candidates[0];
@@ -103,6 +109,7 @@ export class GeminiService {
             if (error.response) {
                 const status = error.response.status;
                 const message = error.response.data?.error?.message || 'Unknown API error';
+                console.error('API Error Response:', status, message);
                 
                 if (status === 401) {
                     throw new Error('Invalid API key. Please check your Gemini API key in settings.');

@@ -26,6 +26,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         context: vscode.WebviewViewResolveContext,
         _token: vscode.CancellationToken,
     ) {
+        console.log('Resolving webview view');
         this._view = webviewView;
 
         webviewView.webview.options = {
@@ -36,6 +37,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
         webviewView.webview.onDidReceiveMessage(data => {
+            console.log('Received message from webview:', data);
             switch (data.type) {
                 case 'sendMessage':
                     this.handleUserMessage(data.message);
@@ -54,6 +56,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     }
 
     private async handleUserMessage(message: string) {
+        console.log('Handling user message:', message);
         if (!message.trim()) return;
 
         // Add user message to chat
@@ -75,12 +78,14 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 
             // Get custom context
             const customContext = this.contextProvider.getContextItems();
+            console.log('Custom context:', customContext);
             
             // Generate AI response
             const response = await this.geminiService.generateResponse(
                 this.messages,
                 customContext
             );
+            console.log('Received response from Gemini:', response);
 
             // Add AI response to chat
             const aiMessage: ChatMessage = {
@@ -95,6 +100,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             this.extractSuggestions(response);
 
         } catch (error: any) {
+            console.error('Error in handleUserMessage:', error);
             vscode.window.showErrorMessage(`AI Assistant Error: ${error.message}`);
             
             // Add error message to chat
@@ -191,7 +197,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
     }
 
     private _getHtmlForWebview(webview: vscode.Webview) {
-        return `
+        const html = `
         <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -366,10 +372,6 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
         <div class="context-info" id="contextInfo">
             Custom context: 0 items
         </div>
-        <div class="message assistant">
-            <div class="message-header">Gemini Assistant</div>
-            Hello! I'm your AI assistant powered by Google Gemini. I can help you with code, answer questions, and provide suggestions. You can add custom context to personalize my responses.
-        </div>
     </div>
     
     <div class="input-container">
@@ -388,6 +390,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 
         function sendMessage() {
             const message = messageInput.value.trim();
+            console.log('Sending message:', message);
             if (message && !isLoading) {
                 vscode.postMessage({
                     type: 'sendMessage',
@@ -455,10 +458,13 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 
         function formatMessage(content) {
             // Simple markdown-like formatting for code blocks
+            // Escape HTML entities first for security
             return content
-                
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
                 .replace(/\`([^\`]+)\`/g, '<code>$1</code>')
-                .replace(/\\n/g, '<br>');
+                .replace(/\n/g, '<br>');
         }
 
         function acceptSuggestion(suggestionId) {
@@ -517,8 +523,8 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 </body>
 </html>
 
-`
-
-;
+`;
+        console.log('Generated HTML:', html);
+        return html;
     }
 }

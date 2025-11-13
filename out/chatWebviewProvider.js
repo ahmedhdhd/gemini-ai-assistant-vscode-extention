@@ -11,6 +11,7 @@ class ChatWebviewProvider {
         this.suggestions = new Map();
     }
     resolveWebviewView(webviewView, context, _token) {
+        console.log('Resolving webview view');
         this._view = webviewView;
         webviewView.webview.options = {
             enableScripts: true,
@@ -18,6 +19,7 @@ class ChatWebviewProvider {
         };
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
         webviewView.webview.onDidReceiveMessage(data => {
+            console.log('Received message from webview:', data);
             switch (data.type) {
                 case 'sendMessage':
                     this.handleUserMessage(data.message);
@@ -35,6 +37,7 @@ class ChatWebviewProvider {
         });
     }
     async handleUserMessage(message) {
+        console.log('Handling user message:', message);
         if (!message.trim())
             return;
         // Add user message to chat
@@ -53,8 +56,10 @@ class ChatWebviewProvider {
             });
             // Get custom context
             const customContext = this.contextProvider.getContextItems();
+            console.log('Custom context:', customContext);
             // Generate AI response
             const response = await this.geminiService.generateResponse(this.messages, customContext);
+            console.log('Received response from Gemini:', response);
             // Add AI response to chat
             const aiMessage = {
                 role: 'assistant',
@@ -66,6 +71,7 @@ class ChatWebviewProvider {
             this.extractSuggestions(response);
         }
         catch (error) {
+            console.error('Error in handleUserMessage:', error);
             vscode.window.showErrorMessage(`AI Assistant Error: ${error.message}`);
             // Add error message to chat
             const errorMessage = {
@@ -152,7 +158,7 @@ class ChatWebviewProvider {
         }
     }
     _getHtmlForWebview(webview) {
-        return `
+        const html = `
         <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -327,10 +333,6 @@ class ChatWebviewProvider {
         <div class="context-info" id="contextInfo">
             Custom context: 0 items
         </div>
-        <div class="message assistant">
-            <div class="message-header">Gemini Assistant</div>
-            Hello! I'm your AI assistant powered by Google Gemini. I can help you with code, answer questions, and provide suggestions. You can add custom context to personalize my responses.
-        </div>
     </div>
     
     <div class="input-container">
@@ -349,6 +351,7 @@ class ChatWebviewProvider {
 
         function sendMessage() {
             const message = messageInput.value.trim();
+            console.log('Sending message:', message);
             if (message && !isLoading) {
                 vscode.postMessage({
                     type: 'sendMessage',
@@ -416,10 +419,13 @@ class ChatWebviewProvider {
 
         function formatMessage(content) {
             // Simple markdown-like formatting for code blocks
+            // Escape HTML entities first for security
             return content
-                
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
                 .replace(/\`([^\`]+)\`/g, '<code>$1</code>')
-                .replace(/\\n/g, '<br>');
+                .replace(/\n/g, '<br>');
         }
 
         function acceptSuggestion(suggestionId) {
@@ -479,6 +485,8 @@ class ChatWebviewProvider {
 </html>
 
 `;
+        console.log('Generated HTML:', html);
+        return html;
     }
 }
 exports.ChatWebviewProvider = ChatWebviewProvider;
