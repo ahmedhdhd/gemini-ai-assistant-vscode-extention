@@ -1,80 +1,76 @@
-import * as vscode from 'vscode';
-import axios from 'axios';
-
-export interface ChatMessage {
-    role: 'user' | 'assistant';
-    content: string;
-    timestamp: number;
-}
-
-export interface GeminiResponse {
-    candidates: Array<{
-        content: {
-            parts: Array<{ text: string }>;
-        };
-    }>;
-}
-
-export class GeminiService {
-    private apiKey: string = '';
-    private baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.GeminiService = void 0;
+const vscode = __importStar(require("vscode"));
+const axios_1 = __importDefault(require("axios"));
+class GeminiService {
     constructor() {
+        this.apiKey = '';
+        this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
         this.updateApiKey();
     }
-
-    public updateApiKey(): void {
+    updateApiKey() {
         const config = vscode.workspace.getConfiguration('geminiAssistant');
-        this.apiKey = config.get<string>('apiKey') || '';
-        
+        this.apiKey = config.get('apiKey') || '';
         if (!this.apiKey) {
-            vscode.window.showWarningMessage(
-                'Please set your Gemini API key in settings to use the AI assistant.',
-                'Open Settings'
-            ).then(selection => {
+            vscode.window.showWarningMessage('Please set your Gemini API key in settings to use the AI assistant.', 'Open Settings').then(selection => {
                 if (selection === 'Open Settings') {
                     vscode.commands.executeCommand('workbench.action.openSettings', 'geminiAssistant.apiKey');
                 }
             });
         }
     }
-
-    public async generateResponse(
-        messages: ChatMessage[],
-        customContext: string[] = []
-    ): Promise<string> {
+    async generateResponse(messages, customContext = []) {
         console.log('Generating response with messages:', messages);
         console.log('Custom context:', customContext);
         console.log('API key configured:', !!this.apiKey);
-        
         if (!this.apiKey) {
             throw new Error('Gemini API key not configured');
         }
-
         try {
             const config = vscode.workspace.getConfiguration('geminiAssistant');
-            const model = config.get<string>('model') || 'gemini-2.0-flash';
+            const model = config.get('model') || 'gemini-2.0-flash';
             console.log('Using model:', model);
-
             // Prepare the conversation context
             let conversationText = '';
-            
             // Add custom context if provided
             if (customContext.length > 0) {
                 conversationText += `Custom Context:\n${customContext.join('\n')}\n\n`;
             }
-
             // Add conversation history
-            conversationText += messages.map(msg => 
-                `${msg.role === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`
-            ).join('\n\n');
-
+            conversationText += messages.map(msg => `${msg.role === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`).join('\n\n');
             const requestBody = {
                 contents: [{
-                    parts: [{
-                        text: conversationText
-                    }]
-                }],
+                        parts: [{
+                                text: conversationText
+                            }]
+                    }],
                 generationConfig: {
                     temperature: 0.7,
                     topK: 40,
@@ -82,49 +78,42 @@ export class GeminiService {
                     maxOutputTokens: 2048,
                 }
             };
-
-            const response = await axios.post<GeminiResponse>(
-                `${this.baseUrl}/models/${model}:generateContent?key=${this.apiKey}`,
-                requestBody,
-                {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+            const response = await axios_1.default.post(`${this.baseUrl}/models/${model}:generateContent?key=${this.apiKey}`, requestBody, {
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-            );
+            });
             console.log('Received response from API:', response.data);
-
             if (response.data.candidates && response.data.candidates.length > 0) {
                 const candidate = response.data.candidates[0];
                 if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
                     return candidate.content.parts[0].text;
                 }
             }
-
             throw new Error('No valid response from Gemini API');
-
-        } catch (error: any) {
+        }
+        catch (error) {
             console.error('Gemini API Error:', error);
-            
             if (error.response) {
                 const status = error.response.status;
                 const message = error.response.data?.error?.message || 'Unknown API error';
                 console.error('API Error Response:', status, message);
-                
                 if (status === 401) {
                     throw new Error('Invalid API key. Please check your Gemini API key in settings.');
-                } else if (status === 429) {
+                }
+                else if (status === 429) {
                     throw new Error('API rate limit exceeded. Please try again later.');
-                } else {
+                }
+                else {
                     throw new Error(`API Error (${status}): ${message}`);
                 }
             }
-            
             throw new Error(`Failed to generate response: ${error.message}`);
         }
     }
-
-    public isConfigured(): boolean {
+    isConfigured() {
         return !!this.apiKey;
     }
 }
+exports.GeminiService = GeminiService;
+//# sourceMappingURL=geminiService.js.map

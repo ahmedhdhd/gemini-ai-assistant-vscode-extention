@@ -9,11 +9,8 @@
   "categories": ["Other"],
   "activationEvents": [
     "onView:geminiChat",
-    "onCommand:geminiAssistant.openChat",
-    "onCommand:geminiAssistant.addContext",
-    "onCommand:geminiAssistant.clearContext",
-    "onCommand:geminiAssistant.acceptSuggestion",
-    "onCommand:geminiAssistant.declineSuggestion"
+    "onView:geminiContext",
+    "onView:geminiAgents"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -21,26 +18,37 @@
       {
         "command": "geminiAssistant.openChat",
         "title": "Open Gemini Assistant",
+        "category": "Gemini",
         "icon": "$(comment-discussion)"
       },
       {
         "command": "geminiAssistant.addContext",
         "title": "Add Custom Context",
+        "category": "Gemini",
         "icon": "$(add)"
       },
       {
         "command": "geminiAssistant.clearContext",
         "title": "Clear Context",
+        "category": "Gemini",
         "icon": "$(clear-all)"
+      },
+      {
+        "command": "geminiAssistant.removeContext",
+        "title": "Remove Context Item",
+        "category": "Gemini",
+        "icon": "$(close)"
       },
       {
         "command": "geminiAssistant.acceptSuggestion",
         "title": "Accept Suggestion",
+        "category": "Gemini",
         "icon": "$(check)"
       },
       {
         "command": "geminiAssistant.declineSuggestion",
         "title": "Decline Suggestion",
+        "category": "Gemini",
         "icon": "$(close)"
       }
     ],
@@ -62,8 +70,7 @@
         },
         {
           "id": "geminiContext",
-          "name": "Custom Context",
-          "type": "tree"
+          "name": "Custom Context"
         }
       ]
     },
@@ -84,17 +91,63 @@
     "configuration": {
       "title": "Gemini Assistant",
       "properties": {
-        "geminiAssistant.apiKey": {
+        "geminiAssistant.aiProvider": {
           "type": "string",
-          "default": "",
-          "description": "Your Google Gemini API key",
+          "default": "gemini",
+          "description": "AI provider to use",
+          "enum": [
+            "gemini",
+            "groq"
+          ],
+          "enumDescriptions": [
+            "Google Gemini (requires Gemini API key)",
+            "Groq (requires Groq API key)"
+          ],
           "scope": "application"
         },
-        "geminiAssistant.model": {
+        "geminiAssistant.geminiApiKey": {
           "type": "string",
-"default": "gemini-2.0-flash",
+          "default": "",
+          "description": "Your Google Gemini API key (get it from https://makersuite.google.com/app/apikey)",
+          "scope": "application"
+        },
+        "geminiAssistant.geminiModel": {
+          "type": "string",
+          "default": "gemini-2.0-flash-exp",
           "description": "Gemini model to use",
-          "enum": ["gemini-pro", "gemini-pro-vision", "gemini-2.0-flash"],
+          "enum": [
+            "gemini-pro",
+            "gemini-pro-vision",
+            "gemini-2.0-flash-exp",
+            "gemini-1.5-pro",
+            "gemini-1.5-flash"
+          ],
+          "scope": "application"
+        },
+        "geminiAssistant.groqApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Your Groq API key (get it from https://console.groq.com/keys)",
+          "scope": "application"
+        },
+        "geminiAssistant.groqModel": {
+          "type": "string",
+          "default": "llama-3.3-70b-versatile",
+          "description": "Groq model to use",
+          "enum": [
+            "llama-3.3-70b-versatile",
+            "llama-3.1-70b-versatile",
+            "llama-3.1-8b-instant",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it"
+          ],
+          "enumDescriptions": [
+            "Llama 3.3 70B - Best overall performance",
+            "Llama 3.1 70B - Previous generation",
+            "Llama 3.1 8B - Fast and efficient",
+            "Mixtral 8x7B - Good balance",
+            "Gemma 2 9B - Lightweight model"
+          ],
           "scope": "application"
         }
       }
@@ -103,7 +156,8 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
   },
   "devDependencies": {
     "@types/node": "16.x",

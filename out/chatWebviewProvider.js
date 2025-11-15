@@ -1,108 +1,98 @@
-import * as vscode from 'vscode';
-import { AIService, ChatMessage } from './aiService';
-import { ContextProvider } from './contextProvider';
-import { AgentService } from './AgentService';
-import { FileCreator } from './fileCreator';
-
-export interface Suggestion {
-    id: string;
-    content: string;
-    type: 'code' | 'text';
-    accepted?: boolean;
-    declined?: boolean;
-}
-
-export class ChatWebviewProvider implements vscode.WebviewViewProvider {
-    private _view?: vscode.WebviewView;
-    private messages: ChatMessage[] = [];
-    private suggestions: Map<string, Suggestion> = new Map();
-    private fileCreator: FileCreator;
-
-    constructor(
-        private readonly _extensionUri: vscode.Uri,
-        private readonly aiService: AIService,
-        private readonly contextProvider: ContextProvider,
-        private readonly agentService: AgentService
-    ) {
-        console.log('ChatWebviewProvider constructor called');
-        this.fileCreator = new FileCreator();
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
-
-    public resolveWebviewView(
-        webviewView: vscode.WebviewView,
-        context: vscode.WebviewViewResolveContext,
-        _token: vscode.CancellationToken,
-    ) {
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ChatWebviewProvider = void 0;
+const vscode = __importStar(require("vscode"));
+const fileCreator_1 = require("./fileCreator");
+class ChatWebviewProvider {
+    constructor(_extensionUri, aiService, contextProvider, agentService) {
+        this._extensionUri = _extensionUri;
+        this.aiService = aiService;
+        this.contextProvider = contextProvider;
+        this.agentService = agentService;
+        this.messages = [];
+        this.suggestions = new Map();
+        console.log('ChatWebviewProvider constructor called');
+        this.fileCreator = new fileCreator_1.FileCreator();
+    }
+    resolveWebviewView(webviewView, context, _token) {
         console.log('=== Resolving webview view ===');
         this._view = webviewView;
-
         webviewView.webview.options = {
             enableScripts: true,
             localResourceRoots: [this._extensionUri]
         };
-
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
         console.log('HTML set for webview');
-
         // Set up message listener
-        webviewView.webview.onDidReceiveMessage(
-            async (data) => {
-                console.log('=== Received message from webview ===');
-                console.log('Message type:', data.type);
-                console.log('Full data:', JSON.stringify(data));
-                
-                switch (data.type) {
-                    case 'sendMessage':
-                        console.log('Processing sendMessage with content:', data.message);
-                        await this.handleUserMessage(data.message);
-                        break;
-                    case 'acceptSuggestion':
-                        console.log('Processing acceptSuggestion:', data.suggestionId);
-                        this.acceptSuggestion(data.suggestionId);
-                        break;
-                    case 'declineSuggestion':
-                        console.log('Processing declineSuggestion:', data.suggestionId);
-                        this.declineSuggestion(data.suggestionId);
-                        break;
-                    case 'applySuggestion':
-                        console.log('Processing applySuggestion:', data.suggestionId);
-                        await this.applySuggestionToEditor(data.suggestionId);
-                        break;
-                    case 'ready':
-                        console.log('Webview is ready');
-                        break;
-                    default:
-                        console.log('Unknown message type:', data.type);
-                }
-            },
-            undefined,
-            []
-        );
-
+        webviewView.webview.onDidReceiveMessage(async (data) => {
+            console.log('=== Received message from webview ===');
+            console.log('Message type:', data.type);
+            console.log('Full data:', JSON.stringify(data));
+            switch (data.type) {
+                case 'sendMessage':
+                    console.log('Processing sendMessage with content:', data.message);
+                    await this.handleUserMessage(data.message);
+                    break;
+                case 'acceptSuggestion':
+                    console.log('Processing acceptSuggestion:', data.suggestionId);
+                    this.acceptSuggestion(data.suggestionId);
+                    break;
+                case 'declineSuggestion':
+                    console.log('Processing declineSuggestion:', data.suggestionId);
+                    this.declineSuggestion(data.suggestionId);
+                    break;
+                case 'applySuggestion':
+                    console.log('Processing applySuggestion:', data.suggestionId);
+                    await this.applySuggestionToEditor(data.suggestionId);
+                    break;
+                case 'ready':
+                    console.log('Webview is ready');
+                    break;
+                default:
+                    console.log('Unknown message type:', data.type);
+            }
+        }, undefined, []);
         console.log('Message listener registered');
     }
-
-    private async handleUserMessage(message: string) {
+    async handleUserMessage(message) {
         console.log('=== handleUserMessage called ===');
         console.log('Message:', message);
-        
         if (!message.trim()) {
             console.log('Message is empty, returning');
             return;
         }
-
         // Add user message to chat
-        const userMessage: ChatMessage = {
+        const userMessage = {
             role: 'user',
             content: message,
             timestamp: Date.now()
         };
-        
         this.messages.push(userMessage);
         console.log('User message added. Total messages:', this.messages.length);
-        
         this.updateWebview();
-
         try {
             // Show loading state
             console.log('Setting loading state to true');
@@ -110,38 +100,28 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 type: 'setLoading',
                 loading: true
             });
-
             // Get custom context
             const customContext = this.contextProvider.getContextItems();
             console.log('Custom context items:', customContext.length);
-            
             // Check if API key is configured
             if (!this.aiService.isConfigured()) {
                 const providerName = this.aiService.getCurrentProviderName();
                 throw new Error(`${providerName} API key is not configured. Please set it in the extension settings.`);
             }
-            
             console.log('Calling AI API...');
             // Generate AI response
-            const response = await this.aiService.generateResponse(
-                this.messages,
-                customContext
-            );
+            const response = await this.aiService.generateResponse(this.messages, customContext);
             console.log('Received response from AI. Length:', response.length);
-
             // Add AI response to chat
-            const aiMessage: ChatMessage = {
+            const aiMessage = {
                 role: 'assistant',
                 content: response,
                 timestamp: Date.now()
             };
-            
             this.messages.push(aiMessage);
             console.log('AI message added. Total messages:', this.messages.length);
-
             // Check if response contains code and create suggestions
             this.extractSuggestions(response);
-            
             // Check if response contains file creation requests
             const filesToCreate = this.fileCreator.extractFileCreationRequests(response);
             if (filesToCreate.length > 0) {
@@ -151,22 +131,21 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                     this.fileCreator.promptFileCreation(filesToCreate);
                 }, 500);
             }
-
-        } catch (error: any) {
+        }
+        catch (error) {
             console.error('=== Error in handleUserMessage ===');
             console.error('Error:', error);
             console.error('Error message:', error.message);
-            
             vscode.window.showErrorMessage(`AI Assistant Error: ${error.message}`);
-            
             // Add error message to chat
-            const errorMessage: ChatMessage = {
+            const errorMessage = {
                 role: 'assistant',
                 content: `Sorry, I encountered an error: ${error.message}`,
                 timestamp: Date.now()
             };
             this.messages.push(errorMessage);
-        } finally {
+        }
+        finally {
             console.log('Setting loading state to false');
             this.postMessage({
                 type: 'setLoading',
@@ -175,24 +154,20 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             this.updateWebview();
         }
     }
-
-    private extractSuggestions(response: string) {
+    extractSuggestions(response) {
         const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
         let match;
-        
         while ((match = codeBlockRegex.exec(response)) !== null) {
             const suggestionId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
-            const suggestion: Suggestion = {
+            const suggestion = {
                 id: suggestionId,
                 content: match[2].trim(),
                 type: 'code'
             };
-            
             this.suggestions.set(suggestionId, suggestion);
         }
     }
-
-    public acceptSuggestion(suggestionId: string) {
+    acceptSuggestion(suggestionId) {
         const suggestion = this.suggestions.get(suggestionId);
         if (suggestion) {
             suggestion.accepted = true;
@@ -200,8 +175,7 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             vscode.window.showInformationMessage('Suggestion accepted');
         }
     }
-
-    public declineSuggestion(suggestionId: string) {
+    declineSuggestion(suggestionId) {
         const suggestion = this.suggestions.get(suggestionId);
         if (suggestion) {
             suggestion.declined = true;
@@ -209,39 +183,34 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
             vscode.window.showInformationMessage('Suggestion declined');
         }
     }
-
-    private async applySuggestionToEditor(suggestionId: string) {
+    async applySuggestionToEditor(suggestionId) {
         const suggestion = this.suggestions.get(suggestionId);
-        if (!suggestion) return;
-
+        if (!suggestion)
+            return;
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor to apply suggestion');
             return;
         }
-
         const selection = editor.selection;
         await editor.edit(editBuilder => {
             if (selection.isEmpty) {
                 editBuilder.insert(selection.start, suggestion.content);
-            } else {
+            }
+            else {
                 editBuilder.replace(selection, suggestion.content);
             }
         });
-
         this.acceptSuggestion(suggestionId);
         vscode.window.showInformationMessage('Suggestion applied to editor');
     }
-
-    private updateWebview() {
+    updateWebview() {
         console.log('=== updateWebview called ===');
         if (this._view) {
             console.log('Posting updateChat message');
             console.log('Messages count:', this.messages.length);
             console.log('Suggestions count:', this.suggestions.size);
-            
             const currentAgent = this.agentService.getCurrentAgent();
-            
             this.postMessage({
                 type: 'updateChat',
                 messages: this.messages,
@@ -250,25 +219,24 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
                 agentName: currentAgent.name,
                 agentIcon: currentAgent.icon
             });
-        } else {
+        }
+        else {
             console.log('WARNING: _view is undefined');
         }
     }
-
-    public updateWebviewWithAgentInfo() {
+    updateWebviewWithAgentInfo() {
         this.updateWebview();
     }
-
-    private postMessage(message: any) {
+    postMessage(message) {
         if (this._view) {
             console.log('Posting message to webview:', message.type);
             this._view.webview.postMessage(message);
-        } else {
+        }
+        else {
             console.log('WARNING: Cannot post message, _view is undefined');
         }
     }
-
-    private _getHtmlForWebview(webview: vscode.Webview) {
+    _getHtmlForWebview(webview) {
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -477,3 +445,5 @@ export class ChatWebviewProvider implements vscode.WebviewViewProvider {
 </html>`;
     }
 }
+exports.ChatWebviewProvider = ChatWebviewProvider;
+//# sourceMappingURL=chatWebviewProvider.js.map
